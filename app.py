@@ -5,7 +5,7 @@ import requests
 from langchain_core.tools import tool
 from langchain_core.messages import HumanMessage, AIMessage
 #from langchain_ollama import ChatOllama
-from langchain_groq import ChatGroq
+from langchain_google_genai import ChatGoogleGenerativeAI
 import os
 
 # ==========================================
@@ -148,8 +148,8 @@ tool_map = {t.name: t for t in tools}
 
 @st.cache_resource
 def get_model():
-    # Make sure to set your GROQ_API_KEY in Render Environment Variables
-    return ChatGroq(model="llama-3.1-8b-instant", temperature=0).bind_tools(tools)
+    # We are using Gemini 3.5 Flash for the best speed and rate limits
+    return ChatGoogleGenerativeAI(model="gemini-3.5-flash", temperature=0).bind_tools(tools)
 
 model = get_model()
 
