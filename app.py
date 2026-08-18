@@ -82,28 +82,45 @@ if user_prompt := st.chat_input("Tell me about your sleep, workout, or ask for a
                 
                 output_text = ""
                 
-                # If the model wants to call tools, execute them and feed results back for a final conversational reply
+                # Inside your app.py tool execution loop:
                 if response.tool_calls:
-                    # Append the AI's tool call message context
                     lc_messages.append(response)
-                    
+
                     for tool_call in response.tool_calls:
                         t_name = tool_call["name"]
                         t_args = tool_call["args"]
-                        tool_result = tool_map[t_name].invoke(t_args)
-                        
-                        # Add tool execution result back to message history for Gemini to read
+
+                        try:
+                            tool_result = tool_map[t_name].invoke(t_args)
+                        except Exception as tool_err:
+                            tool_result = f"Error executing tool {t_name}: {tool_err}"
+
                         from langchain_core.messages import ToolMessage
-                        lc_messages.append(ToolMessage(content=str(tool_result), tool_call_id=tool_call["id"]))
-                    
-                    # Second invoke: Let Gemini read the tool results and write a natural, conversational response back to you
+
+                        lc_messages.append(
+                            ToolMessage(content=str(tool_result), tool_call_id=tool_call["id"])
+                        )
+
                     final_response = model.invoke(lc_messages)
-                    output_text = final_response.content if isinstance(final_response.content, str) else "".join([p.get("text", "") for p in final_response.content if isinstance(p, dict)])
+                    output_text = (
+                        final_response.content
+                        if isinstance(final_response.content, str)
+                        else "".join(
+                            [
+                                p.get("text", "")
+                                for p in final_response.content
+                                if isinstance(p, dict)
+                            ]
+                        )
+                    )
                 else:
-                    output_text = response.content if isinstance(response.content, str) else "".join([p.get("text", "") for p in response.content if isinstance(p, dict)])
-                
-                st.markdown(output_text)
-                st.session_state.messages.append({"role": "assistant", "content": output_text})
+                    output_text = (
+                        response.content
+                        if isinstance(response.content, str)
+                        else "".join(
+                            [p.get("text", "") for p in response.content if isinstance(p, dict)]
+                        )
+                    )
             
             except Exception as e:
                 st.error(f"An error occurred: {e}")
