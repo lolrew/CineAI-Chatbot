@@ -147,7 +147,7 @@ tool_map = {t.name: t for t in tools}
 @st.cache_resource
 def get_model():
     # We are using Gemini 3.5 Flash for the best speed and rate limits
-    return ChatGoogleGenerativeAI(model="gemini-1.5-flash", temperature=0).bind_tools(tools)
+    return ChatGoogleGenerativeAI(model="gemini-2.5-flash", temperature=0).bind_tools(tools)
 
 model = get_model()
 
