@@ -117,19 +117,17 @@ def fetch_live_showtimes(movie_name: str) -> str:
             release_date = movie.get("release_date")
             rating = movie.get("vote_average")
             
-            return f"""
-            **Verified Movie Record: {title}**
-            * **Release Date**: {release_date}
-            * **Rating**: {rating}/10
-            * **Synopsis**: {overview}
-            
-            **Available Screenings:**
-            1. Shaw Theatres Waterway Point | IMAX | 7:15 PM
-            2. Golden Village VivoCity | Dolby Atmos | 7:30 PM
-            3. Cathay Cineplex AMK Hub | Standard 2D | 8:00 PM
-            
-            *Please select your preferred venue configuration and seats below.*
-            """
+            return (
+                f"**Verified Movie Record: {title}**\n"
+                f"* **Release Date**: {release_date}\n"
+                f"* **Rating**: {rating}/10\n"
+                f"* **Synopsis**: {overview}\n\n"
+                f"**Available Screenings:**\n"
+                f"1. Shaw Theatres Waterway Point | IMAX | 7:15 PM\n"
+                f"2. Golden Village VivoCity | Dolby Atmos | 7:30 PM\n"
+                f"3. Cathay Cineplex AMK Hub | Standard 2D | 8:00 PM\n\n"
+                f"*Please select your preferred venue configuration and seats below.*"
+            )
         else:
             return f"No records found for '{movie_name}'."
     except Exception as e:
@@ -149,7 +147,7 @@ tool_map = {t.name: t for t in tools}
 @st.cache_resource
 def get_model():
     # We are using Gemini 3.5 Flash for the best speed and rate limits
-    return ChatGoogleGenerativeAI(model="gemini-3.5-flash", temperature=0).bind_tools(tools)
+    return ChatGoogleGenerativeAI(model="gemini-1.5-flash", temperature=0).bind_tools(tools)
 
 model = get_model()
 
@@ -176,7 +174,13 @@ with tab_chat:
                     lc_messages = [HumanMessage(content=m["content"]) if m["role"]=="user" else AIMessage(content=m["content"]) for m in st.session_state.messages]
                     response = model.invoke(lc_messages)
                     
-                    output_text = response.content
+                    # 1. Ensure output_text is a string
+                    if isinstance(response.content, list):
+                        output_text = "".join([part.get("text", "") for part in response.content if isinstance(part, dict)])
+                    else:
+                        output_text = response.content or ""
+
+                    # 2. Append tool results safely
                     if response.tool_calls:
                         for tool_call in response.tool_calls:
                             t_name = tool_call["name"]
