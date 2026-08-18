@@ -4,7 +4,8 @@ import streamlit as st
 import requests
 from langchain_core.tools import tool
 from langchain_core.messages import HumanMessage, AIMessage
-from langchain_ollama import ChatOllama
+#from langchain_ollama import ChatOllama
+from langchain_groq import ChatGroq
 import os
 
 # ==========================================
@@ -147,7 +148,8 @@ tool_map = {t.name: t for t in tools}
 
 @st.cache_resource
 def get_model():
-    return ChatOllama(model="llama3.1", temperature=0).bind_tools(tools)
+    # Make sure to set your GROQ_API_KEY in Render Environment Variables
+    return ChatGroq(model="llama-3.3-70b-versatile", temperature=0).bind_tools(tools)
 
 model = get_model()
 
