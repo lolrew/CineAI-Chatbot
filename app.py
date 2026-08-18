@@ -101,7 +101,7 @@ TMDB_API_KEY = "5d054cb96d495c1e19b175a5a5b0dcfd"
 
 @tool
 def fetch_live_showtimes(movie_name: str) -> str:
-    """Fetches real-time movie metadata from TMDB and lists matching screening schedules."""
+    """ONLY use this tool when the user explicitly asks for movie showtimes, screening schedules, theater locations, or theater availability for a specific movie."""
     st.session_state.selected_movie = movie_name
     st.session_state.show_seat_picker = True
     
@@ -157,58 +157,8 @@ tab_chat, tab_pay = st.tabs(["AI Assistant & Inventory", "Secure Checkout"])
 
 # --- TAB 1: AI CHATBOT & COMMERCIAL SEAT MATRIX ---
 with tab_chat:
-    # 1. Render all existing messages first so they stay positioned above the chat input
-    for message in st.session_state.messages:
-        with st.chat_message(message["role"]):
-            st.markdown(message["content"])
-
-    # 2. Chat input sits cleanly at the bottom of the message flow
-    if user_prompt := st.chat_input("Enter movie title or screening query..."):
-        st.session_state.messages.append({"role": "user", "content": user_prompt})
-        with st.chat_message("user"):
-            st.markdown(user_prompt)
-            
-        with st.chat_message("assistant"):
-            with st.spinner("Querying inventory management system..."):
-                try:
-                    system_instruction = (
-                        "You are CineAI, an expert, passionate, and opinionated movie companion. "
-                        "Talk naturally and conversationally, like a film geek chatting with a friend over coffee—avoid robotic, overly formal corporate speak. "
-                        "Engage in playful banter and friendly debates about films if the user shares a strong opinion or hot take. "
-                        "SPOILER POLICY: If the user explicitly asks for spoilers, plot twists, or endings, you are fully permitted and expected to provide them accurately. "
-                        "However, if they do not ask for spoilers, keep major plot details hidden."
-                    )
-
-                    lc_messages = [("system", system_instruction)]
-
-                    for m in st.session_state.messages:
-                        if m["role"] == "user":
-                            lc_messages.append(HumanMessage(content=m["content"]))
-                        else:
-                            lc_messages.append(AIMessage(content=m["content"]))
-                    
-                    response = model.invoke(lc_messages)
-                    
-                    if isinstance(response.content, list):
-                        output_text = "".join([part.get("text", "") for part in response.content if isinstance(part, dict)])
-                    else:
-                        output_text = response.content or ""
-
-                    if response.tool_calls:
-                        for tool_call in response.tool_calls:
-                            t_name = tool_call["name"]
-                            t_args = tool_call["args"]
-                            tool_result = tool_map[t_name].invoke(t_args)
-                            output_text += f"\n\n{tool_result}"
-                    
-                    st.markdown(output_text)
-                    st.session_state.messages.append({"role": "assistant", "content": output_text})
-                except Exception as e:
-                    st.error(f"Error: {e}")
-
-    # COMMERCIAL INTERACTIVE SEAT MAP
+    # 1. COMMERCIAL INTERACTIVE SEAT MAP (Rendered first so chat input stays at bottom)
     if st.session_state.show_seat_picker:
-        st.markdown("---")
         st.subheader(f"Hall Seating Plan: {st.session_state.selected_movie}")
         
         st.session_state.cinema_choice = st.selectbox("Select Hall & Audio Format:", [
@@ -266,6 +216,56 @@ with tab_chat:
                     st.success("Seats locked. Navigate to the 'Secure Checkout' tab.")
                 else:
                     st.warning("Please select at least one seat.")
+        st.markdown("---")
+
+    # 2. Render all existing messages
+    for message in st.session_state.messages:
+        with st.chat_message(message["role"]):
+            st.markdown(message["content"])
+
+    # 3. Chat input sits at the very bottom of the tab flow
+    if user_prompt := st.chat_input("Enter movie title or screening query..."):
+        st.session_state.messages.append({"role": "user", "content": user_prompt})
+        with st.chat_message("user"):
+            st.markdown(user_prompt)
+            
+        with st.chat_message("assistant"):
+            with st.spinner("Thinking..."):
+                try:
+                    system_instruction = (
+                        "You are CineAI, an expert, passionate, and opinionated movie companion. "
+                        "Talk naturally and conversationally, like a film geek chatting with a friend over coffee—avoid robotic, overly formal corporate speak. "
+                        "Engage in playful banter and friendly debates about films if the user shares a strong opinion or hot take. "
+                        "SPOILER POLICY: If the user explicitly asks for spoilers, plot twists, or endings, you are fully permitted and expected to provide them accurately. "
+                        "CRITICAL: Do NOT call the fetch_live_showtimes tool unless the user explicitly asks for showtimes, screening schedules, or theater locations/availability."
+                    )
+
+                    lc_messages = [("system", system_instruction)]
+
+                    for m in st.session_state.messages:
+                        if m["role"] == "user":
+                            lc_messages.append(HumanMessage(content=m["content"]))
+                        else:
+                            lc_messages.append(AIMessage(content=m["content"]))
+                    
+                    response = model.invoke(lc_messages)
+                    
+                    if isinstance(response.content, list):
+                        output_text = "".join([part.get("text", "") for part in response.content if isinstance(part, dict)])
+                    else:
+                        output_text = response.content or ""
+
+                    if response.tool_calls:
+                        for tool_call in response.tool_calls:
+                            t_name = tool_call["name"]
+                            t_args = tool_call["args"]
+                            tool_result = tool_map[t_name].invoke(t_args)
+                            output_text += f"\n\n{tool_result}"
+                    
+                    st.markdown(output_text)
+                    st.session_state.messages.append({"role": "assistant", "content": output_text})
+                except Exception as e:
+                    st.error(f"Error: {e}")
 
 # --- TAB 2: SECURE PAYMENT GATEWAY ---
 with tab_pay:
