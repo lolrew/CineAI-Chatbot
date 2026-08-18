@@ -1,19 +1,15 @@
 import streamlit as st
+from langchain_core.messages import HumanMessage, AIMessage
+from agent import model, tool_map
 
 # ==========================================
 # 1. PAGE CONFIG MUST BE THE ABSOLUTE FIRST COMMAND
 # ==========================================
 st.set_page_config(
     page_title="LalaAI | Habit & Health Coach",
-    # Option A: Use a clean professional SVG icon URL
     page_icon="https://api.iconify.design/lucide:activity.svg?color=%2310b981",
-    # Option B: Or use a clean professional standard emoji like a chart or robot if preferred: "📊" or "🤖"
     layout="centered"
 )
-
-# Now import everything else AFTER set_page_config
-from langchain_core.messages import HumanMessage, AIMessage
-from agent import model, tool_map
 
 # ==========================================
 # 2. UI STYLING & HEADER
@@ -45,12 +41,10 @@ for message in st.session_state.messages:
 # HANDLE USER INPUT & AGENT EXECUTION
 # ==========================================
 if user_prompt := st.chat_input("Tell me about your sleep, workout, or ask for advice..."):
-    # 1. Append and render user message
     st.session_state.messages.append({"role": "user", "content": user_prompt})
     with st.chat_message("user"):
         st.markdown(user_prompt)
         
-    # 2. Generate assistant response using LangChain and tools
     with st.chat_message("assistant"):
         with st.spinner("Analyzing your habits..."):
             try:
@@ -58,7 +52,7 @@ if user_prompt := st.chat_input("Tell me about your sleep, workout, or ask for a
                     "You are a supportive, insightful personal health and wellness co-pilot. "
                     "Your job is to track the user's daily habits using your logging tools and review their "
                     "history when they ask for advice or recommendations. "
-                    "You also have access to a Singapore calendar tool to check for upcoming public holidays and cultural milestones (like Valentine's Day or National Day). "
+                    "You also have access to a Singapore calendar tool to check for upcoming public holidays and cultural milestones. "
                     "Use these local calendar insights to help the user plan their rest days, adjust their workouts around holidays, or remind them to take timely breaks. "
                     "Be conversational, encouraging, and practical. When a user provides data, acknowledge it "
                     "warmly and confirm it has been logged. When they ask for advice, use your tools to check their "
@@ -77,12 +71,9 @@ if user_prompt := st.chat_input("Tell me about your sleep, workout, or ask for a
                     else:
                         lc_messages.append(AIMessage(content=m["content"]))
                 
-                # First invoke to see if model wants to call tools or talk
                 response = model.invoke(lc_messages)
-                
                 output_text = ""
                 
-                # Inside your app.py tool execution loop:
                 if response.tool_calls:
                     lc_messages.append(response)
 
@@ -96,7 +87,6 @@ if user_prompt := st.chat_input("Tell me about your sleep, workout, or ask for a
                             tool_result = f"Error executing tool {t_name}: {tool_err}"
 
                         from langchain_core.messages import ToolMessage
-
                         lc_messages.append(
                             ToolMessage(content=str(tool_result), tool_call_id=tool_call["id"])
                         )
@@ -105,22 +95,17 @@ if user_prompt := st.chat_input("Tell me about your sleep, workout, or ask for a
                     output_text = (
                         final_response.content
                         if isinstance(final_response.content, str)
-                        else "".join(
-                            [
-                                p.get("text", "")
-                                for p in final_response.content
-                                if isinstance(p, dict)
-                            ]
-                        )
+                        else "".join([p.get("text", "") for p in final_response.content if isinstance(p, dict)])
                     )
                 else:
                     output_text = (
                         response.content
                         if isinstance(response.content, str)
-                        else "".join(
-                            [p.get("text", "") for p in response.content if isinstance(p, dict)]
-                        )
+                        else "".join([p.get("text", "") for p in response.content if isinstance(p, dict)])
                     )
+                
+                st.markdown(output_text)
+                st.session_state.messages.append({"role": "assistant", "content": output_text})
             
             except Exception as e:
                 st.error(f"An error occurred: {e}")
