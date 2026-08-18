@@ -1,19 +1,17 @@
 import streamlit as st
-from langchain_core.messages import HumanMessage, AIMessage
-from agent import model, tool_map
-
-"""
-This script creates your chat interface. 
-You can type things like "I slept 6 hours last night and went for a 45-minute Zone 4 run" or 
-"How have my habits been this week, and what should I improve?", 
-and Gemini will automatically log your data or check your history to give you personalized health and lifestyle advice.
-"""
 
 # ==========================================
-# PAGE CONFIG & STYLING
+# 1. PAGE CONFIG MUST BE THE ABSOLUTE FIRST COMMAND
 # ==========================================
 st.set_page_config(page_title="Personal Habit & Health Co-Pilot", page_icon="🌱", layout="centered")
 
+# Now import everything else AFTER set_page_config
+from langchain_core.messages import HumanMessage, AIMessage
+from agent import model, tool_map
+
+# ==========================================
+# 2. UI STYLING & HEADER
+# ==========================================
 st.markdown("""
     <div style='text-align: center; padding: 10px; border-bottom: 2px solid #2ecc71; margin-bottom: 20px;'>
         <h1 style='color: #2ecc71;'>🌱 Habit & Health Co-Pilot</h1>
