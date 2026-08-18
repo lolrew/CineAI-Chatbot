@@ -20,7 +20,7 @@ from agent import model, tool_map
 # ==========================================
 st.markdown("""
     <div style='text-align: center; padding: 10px; border-bottom: 2px solid #2ecc71; margin-bottom: 20px;'>
-        <h1 style='color: #2ecc71;'>"📊 LalaAI Habit & Health Coach"</h1>
+        <h1 style='color: #2ecc71;'>LalaAI Coach</h1>
         <p style='color: #888;'>Track your daily habits, analyze your routines, and get personalized lifestyle coaching.</p>
     </div>
 """, unsafe_allow_html=True)

@@ -24,7 +24,7 @@ def send_telegram_reminder():
 if __name__ == "__main__":
     scheduler = BackgroundScheduler()
     # Schedule the job to run every day at 8:00 PM (20:00)
-    scheduler.add_job(send_telegram_reminder, 'interval', minutes=1)
+    scheduler.add_job(send_telegram_reminder, 'cron', hour=20, minute=0)
     scheduler.start()
     
     print("Reminder bot started and running in background...")
