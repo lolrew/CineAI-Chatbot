@@ -52,8 +52,9 @@ if user_prompt := st.chat_input("Tell me about your sleep, workout, or ask for a
                     "You are a supportive, insightful personal health and wellness co-pilot. "
                     "Your job is to track the user's daily habits using your logging tools and review their "
                     "history when they ask for advice or recommendations. "
-                    "Be encouraging, practical, and proactive. If they report low sleep or lack of activity, "
-                    "gently suggest adjustments to help them stay healthy and balanced."
+                    "Be conversational, encouraging, and practical. When a user provides data, acknowledge it "
+                    "warmly and confirm it has been logged. When they ask for advice, use your tools to check their "
+                    "history, then talk directly to them like an expert coach."
                 )
 
                 lc_messages = [("system", system_instruction)]
@@ -64,21 +65,30 @@ if user_prompt := st.chat_input("Tell me about your sleep, workout, or ask for a
                     else:
                         lc_messages.append(AIMessage(content=m["content"]))
                 
+                # First invoke to see if model wants to call tools or talk
                 response = model.invoke(lc_messages)
                 
-                # Extract text response
-                if isinstance(response.content, list):
-                    output_text = "".join([part.get("text", "") for part in response.content if isinstance(part, dict)])
-                else:
-                    output_text = response.content or ""
-
-                # Execute any tool calls requested by Gemini
+                output_text = ""
+                
+                # If the model wants to call tools, execute them and feed results back for a final conversational reply
                 if response.tool_calls:
+                    # Append the AI's tool call message context
+                    lc_messages.append(response)
+                    
                     for tool_call in response.tool_calls:
                         t_name = tool_call["name"]
                         t_args = tool_call["args"]
                         tool_result = tool_map[t_name].invoke(t_args)
-                        output_text += f"\n\n*(System Log: {tool_result})*"
+                        
+                        # Add tool execution result back to message history for Gemini to read
+                        from langchain_core.messages import ToolMessage
+                        lc_messages.append(ToolMessage(content=str(tool_result), tool_call_id=tool_call["id"]))
+                    
+                    # Second invoke: Let Gemini read the tool results and write a natural, conversational response back to you
+                    final_response = model.invoke(lc_messages)
+                    output_text = final_response.content if isinstance(final_response.content, str) else "".join([p.get("text", "") for p in final_response.content if isinstance(p, dict)])
+                else:
+                    output_text = response.content if isinstance(response.content, str) else "".join([p.get("text", "") for p in response.content if isinstance(p, dict)])
                 
                 st.markdown(output_text)
                 st.session_state.messages.append({"role": "assistant", "content": output_text})
