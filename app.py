@@ -171,7 +171,25 @@ with tab_chat:
         with st.chat_message("assistant"):
             with st.spinner("Querying inventory management system..."):
                 try:
-                    lc_messages = [HumanMessage(content=m["content"]) if m["role"]=="user" else AIMessage(content=m["content"]) for m in st.session_state.messages]
+                    
+                    # Define your persona and behavioral guidelines here
+                    system_instruction = (
+                        "You are CineAI, an expert, passionate, and opinionated movie companion. "
+                        "Talk naturally and conversationally, like a film geek chatting with a friend over coffee—avoid robotic, overly formal corporate speak. "
+                        "Engage in playful banter and friendly debates about films if the user shares a strong opinion or hot take. "
+                        "SPOILER POLICY: If the user explicitly asks for spoilers, plot twists, or endings, you are fully permitted and expected to provide them accurately. "
+                        "However, if they do not ask for spoilers, keep major plot details hidden."
+                    )
+
+                    # Build message list starting with the system prompt, followed by history
+                    lc_messages = [("system", system_instruction)]
+
+                    for m in st.session_state.messages:
+                        if m["role"] == "user":
+                            lc_messages.append(HumanMessage(content=m["content"]))
+                        else:
+                            lc_messages.append(AIMessage(content=m["content"]))
+                    
                     response = model.invoke(lc_messages)
                     
                     # 1. Ensure output_text is a string
