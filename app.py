@@ -3,7 +3,13 @@ import streamlit as st
 # ==========================================
 # 1. PAGE CONFIG MUST BE THE ABSOLUTE FIRST COMMAND
 # ==========================================
-st.set_page_config(page_title="Personal Habit & Health Co-Pilot", page_icon="🌱", layout="centered")
+st.set_page_config(
+    page_title="LalaAI | Habit & Health Coach",
+    # Option A: Use a clean professional SVG icon URL
+    page_icon="https://api.iconify.design/lucide:activity.svg?color=%2310b981",
+    # Option B: Or use a clean professional standard emoji like a chart or robot if preferred: "📊" or "🤖"
+    layout="centered"
+)
 
 # Now import everything else AFTER set_page_config
 from langchain_core.messages import HumanMessage, AIMessage
@@ -14,7 +20,7 @@ from agent import model, tool_map
 # ==========================================
 st.markdown("""
     <div style='text-align: center; padding: 10px; border-bottom: 2px solid #2ecc71; margin-bottom: 20px;'>
-        <h1 style='color: #2ecc71;'>🌱 Habit & Health LalaAI</h1>
+        <h1 style='color: #2ecc71;'>"📊 LalaAI Habit & Health Coach"</h1>
         <p style='color: #888;'>Track your daily habits, analyze your routines, and get personalized lifestyle coaching.</p>
     </div>
 """, unsafe_allow_html=True)
