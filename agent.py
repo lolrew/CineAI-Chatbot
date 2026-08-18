@@ -4,7 +4,7 @@ import os
 from langchain_core.tools import tool
 from langchain_google_genai import ChatGoogleGenerativeAI
 from database import log_habit, get_recent_logs
-from sg_calender import check_upcoming_sg_events
+from sg_calendar import check_upcoming_sg_events
 
 # ==========================================
 # 1. DEFINE HABIT & HEALTH TOOLS FOR GEMINI
