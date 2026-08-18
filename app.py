@@ -14,7 +14,7 @@ from agent import model, tool_map
 # ==========================================
 st.markdown("""
     <div style='text-align: center; padding: 10px; border-bottom: 2px solid #2ecc71; margin-bottom: 20px;'>
-        <h1 style='color: #2ecc71;'>🌱 Habit & Health Co-Pilot</h1>
+        <h1 style='color: #2ecc71;'>🌱 Habit & Health LalaAI</h1>
         <p style='color: #888;'>Track your daily habits, analyze your routines, and get personalized lifestyle coaching.</p>
     </div>
 """, unsafe_allow_html=True)
@@ -54,7 +54,11 @@ if user_prompt := st.chat_input("Tell me about your sleep, workout, or ask for a
                     "history when they ask for advice or recommendations. "
                     "Be conversational, encouraging, and practical. When a user provides data, acknowledge it "
                     "warmly and confirm it has been logged. When they ask for advice, use your tools to check their "
-                    "history, then talk directly to them like an expert coach."
+                    "history, then talk directly to them like an expert coach. "
+                    "CRITICAL STYLE RULE: Keep your replies short, punchy, and conversational (1-3 sentences max) "
+                    "unless the user explicitly asks for a detailed plan, schedule, or long breakdown. "
+                    "TABLE RULE: Whenever the user asks for a training schedule, routine, or multi-day plan, "
+                    "always format the output as a clean Markdown table with clear columns (e.g., Day, Focus, Activity, Notes)."
                 )
 
                 lc_messages = [("system", system_instruction)]
