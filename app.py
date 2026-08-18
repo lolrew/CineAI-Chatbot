@@ -149,7 +149,7 @@ tool_map = {t.name: t for t in tools}
 @st.cache_resource
 def get_model():
     # Make sure to set your GROQ_API_KEY in Render Environment Variables
-    return ChatGroq(model="llama-3.3-70b-versatile", temperature=0).bind_tools(tools)
+    return ChatGroq(model="llama-3.1-8b-instant", temperature=0).bind_tools(tools)
 
 model = get_model()
 
