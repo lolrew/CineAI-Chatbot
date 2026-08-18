@@ -4,7 +4,6 @@ import streamlit as st
 import requests
 from langchain_core.tools import tool
 from langchain_core.messages import HumanMessage, AIMessage
-#from langchain_ollama import ChatOllama
 from langchain_google_genai import ChatGoogleGenerativeAI
 import os
 
@@ -98,7 +97,7 @@ if "messages" not in st.session_state:
 # 2. DEFINE LIVE TOOLS (TMDB + PRICING)
 # ==========================================
 
-TMDB_API_KEY = "5d054cb96d495c1e19b175a5a5b0dcfd"  # Keep your active TMDB API key here
+TMDB_API_KEY = "5d054cb96d495c1e19b175a5a5b0dcfd"
 
 @tool
 def fetch_live_showtimes(movie_name: str) -> str:
@@ -146,7 +145,6 @@ tool_map = {t.name: t for t in tools}
 
 @st.cache_resource
 def get_model():
-    # We are using Gemini 3.5 Flash for the best speed and rate limits
     return ChatGoogleGenerativeAI(model="gemini-3.6-flash", temperature=0).bind_tools(tools)
 
 model = get_model()
@@ -159,10 +157,12 @@ tab_chat, tab_pay = st.tabs(["AI Assistant & Inventory", "Secure Checkout"])
 
 # --- TAB 1: AI CHATBOT & COMMERCIAL SEAT MATRIX ---
 with tab_chat:
+    # 1. Render all existing messages first so they stay positioned above the chat input
     for message in st.session_state.messages:
         with st.chat_message(message["role"]):
             st.markdown(message["content"])
 
+    # 2. Chat input sits cleanly at the bottom of the message flow
     if user_prompt := st.chat_input("Enter movie title or screening query..."):
         st.session_state.messages.append({"role": "user", "content": user_prompt})
         with st.chat_message("user"):
@@ -171,8 +171,6 @@ with tab_chat:
         with st.chat_message("assistant"):
             with st.spinner("Querying inventory management system..."):
                 try:
-                    
-                    # Define your persona and behavioral guidelines here
                     system_instruction = (
                         "You are CineAI, an expert, passionate, and opinionated movie companion. "
                         "Talk naturally and conversationally, like a film geek chatting with a friend over coffee—avoid robotic, overly formal corporate speak. "
@@ -181,7 +179,6 @@ with tab_chat:
                         "However, if they do not ask for spoilers, keep major plot details hidden."
                     )
 
-                    # Build message list starting with the system prompt, followed by history
                     lc_messages = [("system", system_instruction)]
 
                     for m in st.session_state.messages:
@@ -192,13 +189,11 @@ with tab_chat:
                     
                     response = model.invoke(lc_messages)
                     
-                    # 1. Ensure output_text is a string
                     if isinstance(response.content, list):
                         output_text = "".join([part.get("text", "") for part in response.content if isinstance(part, dict)])
                     else:
                         output_text = response.content or ""
 
-                    # 2. Append tool results safely
                     if response.tool_calls:
                         for tool_call in response.tool_calls:
                             t_name = tool_call["name"]
@@ -222,7 +217,6 @@ with tab_chat:
             "Cathay Cineplex AMK Hub (Standard 2D)"
         ])
         
-        # Realistic Cinema Screen Header
         st.markdown("""
             <div class="screen-container">
                 <div class="cinema-screen">SCREEN</div>
@@ -287,7 +281,6 @@ with tab_pay:
         booking_fee = 1.50
         total_payable = subtotal + booking_fee
         
-        # Professional Order Summary Card
         st.markdown(f"""
         <div class="checkout-card">
             <h4 style="margin-top:0; color: #fff; border-bottom: 1px solid #333; padding-bottom: 10px;">Order Summary</h4>
