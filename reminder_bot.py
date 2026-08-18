@@ -4,7 +4,7 @@ import requests
 from apscheduler.schedulers.background import BackgroundScheduler
 from database import get_recent_logs
 
-# Replace these with your actual BotFather token and your Telegram Chat ID
+# Pulls the Telegram bot token and chat ID from environment variables from Render.com
 BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "YOUR_BOT_TOKEN_HERE")
 CHAT_ID = os.getenv("TELEGRAM_CHAT_ID", "YOUR_CHAT_ID_HERE")
 
@@ -24,7 +24,7 @@ def send_telegram_reminder():
 if __name__ == "__main__":
     scheduler = BackgroundScheduler()
     # Schedule the job to run every day at 8:00 PM (20:00)
-    scheduler.add_job(send_telegram_reminder, 'cron', hour=20, minute=0)
+    scheduler.add_job(send_telegram_reminder, 'interval', minutes=1)
     scheduler.start()
     
     print("Reminder bot started and running in background...")
