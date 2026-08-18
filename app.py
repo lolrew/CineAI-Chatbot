@@ -1,15 +1,13 @@
+import streamlit as st
+from langchain_core.messages import HumanMessage, AIMessage
+from agent import model, tool_map
+
 """
 This script creates your chat interface. 
 You can type things like "I slept 6 hours last night and went for a 45-minute Zone 4 run" or 
 "How have my habits been this week, and what should I improve?", 
 and Gemini will automatically log your data or check your history to give you personalized health and lifestyle advice.
 """
-
-
-import streamlit as st
-from langchain_core.messages import HumanMessage, AIMessage
-from agent import model, tool_map
-
 
 # ==========================================
 # PAGE CONFIG & STYLING
