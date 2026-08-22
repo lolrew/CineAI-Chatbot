@@ -11,8 +11,38 @@ st.set_page_config(
     layout="centered"
 )
 
+# Cache resource to eliminate reload lag
+@st.cache_resource
+def get_cached_model():
+    return model, tool_map
+
+cached_model, cached_tool_map = get_cached_model()
+
 # ==========================================
-# 2. UI STYLING & HEADER
+# 2. SIDEBAR - TOKEN & QUOTA MONITOR
+# ==========================================
+if "total_tokens_used" not in st.session_state:
+    st.session_state.total_tokens_used = 0
+
+if "request_count" not in st.session_state:
+    st.session_state.request_count = 0
+
+with st.sidebar:
+    st.header("📊 Usage & Quota")
+    st.metric("Requests Today (Est.)", f"{st.session_state.request_count} / 20")
+    st.progress(min(st.session_state.request_count / 20.0, 1.0))
+    st.metric("Total Tokens Consumed", st.session_state.total_tokens_used)
+    st.info("Free tier limit is 20 requests/day.")
+    
+    if st.button("Clear Chat History"):
+        st.session_state.messages = [{
+            "role": "assistant",
+            "content": "Hello! I'm your personal habit tracker. Tell me about your day—such as how many hours you slept, your workouts, or work hours—and I'll log them."
+        }]
+        st.rerun()
+
+# ==========================================
+# 3. UI STYLING & HEADER
 # ==========================================
 st.markdown("""
     <div style='text-align: center; padding: 10px; border-bottom: 2px solid #2ecc71; margin-bottom: 20px;'>
@@ -38,7 +68,7 @@ for message in st.session_state.messages:
         st.markdown(message["content"])
 
 # ==========================================
-# HANDLE USER INPUT & AGENT EXECUTION
+# 4. HANDLE USER INPUT & AGENT EXECUTION
 # ==========================================
 if user_prompt := st.chat_input("Tell me about your sleep, workout, or ask for advice..."):
     st.session_state.messages.append({"role": "user", "content": user_prompt})
@@ -69,9 +99,18 @@ if user_prompt := st.chat_input("Tell me about your sleep, workout, or ask for a
                     else:
                         lc_messages.append(AIMessage(content=m["content"]))
                 
-                response = model.invoke(lc_messages)
+                # Increment request counter
+                st.session_state.request_count += 1
+                
+                # Invoke model
+                response = cached_model.invoke(lc_messages)
                 output_text = ""
                 
+                # Track usage metadata if available from response
+                if hasattr(response, "response_metadata") and "token_usage" in response.response_metadata:
+                    usage = response.response_metadata["token_usage"]
+                    st.session_state.total_tokens_used += usage.get("total_tokens", 0)
+
                 if response.tool_calls:
                     lc_messages.append(response)
 
@@ -80,7 +119,7 @@ if user_prompt := st.chat_input("Tell me about your sleep, workout, or ask for a
                         t_args = tool_call["args"]
 
                         try:
-                            tool_result = tool_map[t_name].invoke(t_args)
+                            tool_result = cached_tool_map[t_name].invoke(t_args)
                         except Exception as tool_err:
                             tool_result = f"Error executing tool {t_name}: {tool_err}"
 
@@ -89,7 +128,12 @@ if user_prompt := st.chat_input("Tell me about your sleep, workout, or ask for a
                             ToolMessage(content=str(tool_result), tool_call_id=tool_call["id"])
                         )
 
-                    final_response = model.invoke(lc_messages)
+                    final_response = cached_model.invoke(lc_messages)
+                    
+                    if hasattr(final_response, "response_metadata") and "token_usage" in final_response.response_metadata:
+                        usage = final_response.response_metadata["token_usage"]
+                        st.session_state.total_tokens_used += usage.get("total_tokens", 0)
+
                     output_text = (
                         final_response.content
                         if isinstance(final_response.content, str)

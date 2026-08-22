@@ -48,5 +48,5 @@ tools = [record_daily_habit, fetch_user_history]
 tool_map = {t.name: t for t in tools}
 
 # Initialize model without Streamlit cache wrappers inside agent.py
-llm = ChatGoogleGenerativeAI(model="gemini-3.6-flash", temperature=0.2)
+llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash", temperature=0.1)
 model = llm.bind_tools(tools)
