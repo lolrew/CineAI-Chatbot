@@ -4,7 +4,6 @@ import os
 from langchain_core.tools import tool
 from langchain_google_genai import ChatGoogleGenerativeAI
 from database import log_habit, get_recent_logs
-from sg_calendar import check_upcoming_sg_events
 
 # ==========================================
 # 1. DEFINE HABIT & HEALTH TOOLS FOR GEMINI
@@ -43,12 +42,9 @@ def fetch_user_history(days: int = 7) -> str:
     
     return formatted_logs
 
-@tool
-def get_upcoming_singapore_events(days_ahead: int = 7) -> list:
-    """Checks for upcoming public holidays and cultural events in Singapore for the next few days."""
-    return check_upcoming_sg_events(days_ahead)
 
-tools = [record_daily_habit, fetch_user_history, get_upcoming_singapore_events]
+
+tools = [record_daily_habit, fetch_user_history]
 tool_map = {t.name: t for t in tools}
 
 # Initialize model without Streamlit cache wrappers inside agent.py
