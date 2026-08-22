@@ -28,7 +28,7 @@ if "request_count" not in st.session_state:
     st.session_state.request_count = 0
 
 with st.sidebar:
-    st.header("📊 Usage & Quota")
+    st.header("Usage & Quota")
     st.metric("Requests Today (Est.)", f"{st.session_state.request_count} / 20")
     st.progress(min(st.session_state.request_count / 20.0, 1.0))
     st.metric("Total Tokens Consumed", st.session_state.total_tokens_used)
